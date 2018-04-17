@@ -1,0 +1,48 @@
+
+Demo - the best deal
+------------------------
+Database
+
+sql9.jnb2.host-h.net - Host
+thbetdea_1 - User
+thbetdea_dbDEMO1 – Schema
+CEZ83R88 – password
+
+FTP:
+ftp://ftp.thebestdeal.co.za
+
+www.thebestdeal.co.za – host
+user – thbetdea
+password – uH556ffp
+
+
+Cpanel
+        URL         : http://mail.thebestdeal.co.za/
+        Username    : thebestdeal.co.za
+        Password    : uH556ffp
+		
+===============================================================================================================================
+Login Details :
+	
+	1) Front :  
+		URL 	 	:	www.thebestdeal.co.za
+		Username 	:  amie@tbd.com
+		Password 	: 	1234567	
+		
+		Username 	:  martin@tbd.com
+		Password 	: 	1234567	
+
+	2) Admin :  
+		URL 	 		: www.thebestdeal.co.za/admin
+		Username 		: genknooztester9@gmail.com
+		Password 		: genknooz!
+	
+		Admin Login credentials 
+		
+		SuperAdmin 		: genknooztester9@gmail.com/genknooz!
+		Retailer login	: gameadmin@thebestdeals.co.za/5674
+		Store format	: gameuser@thebestdeals.co.za/5674
+		Store			: westwooduser@thebestdeals.co.za/123456
+		Another Store format : checkersadmin@thebestdeals.co.za/5674
+		
+===============================================================================================================================
