@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>The Best Deal</title>
+
+    <!-- Bootstrap -->
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/bootstrap.css" rel="stylesheet">
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/bootstrap-select.css" rel="stylesheet">
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/custom.css" rel="stylesheet">
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/style.css" rel="stylesheet">
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/custom_responsive.css" rel="stylesheet">
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/font-awesome.css" rel="stylesheet">
+
+    <!-- Toastr CSS -->
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/toastr.min.css" rel="stylesheet" type="text/css">
+
+    <!-- Toggles CSS -->
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/toggles.css" rel="stylesheet" type="text/css">
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/toggles-light.css" rel="stylesheet" type="text/css">
+
+    <!-- Raty CSS -->
+    <link href="<?php echo $this->config->item('front_assets'); ?>css/jquery.raty.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+      <script src="js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  	<nav class="navbar navbar-default">
+        <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+        	<a class="navbar-brand" href="<?php echo front_url() ?>">
+                <img src="<?php echo $this->config->item('front_assets'); ?>img/logo.png" class="img-responsive" alt="the best deal">
+                <span>The Best Deals</span>
+            </a>
+        </div>
+        <form class="navbar-form navbar-left" role="search">
+            <div class="input-group">
+            	<input type="text" id="search_text" class="form-control" placeholder="Search Product" style="display:none">
+            	<span class="input-group-btn">
+            		<button class="btn btn-search" type="button" id="search_button">Go!</button>
+            	</span>
+            </div><!-- /input-group -->
+        </form>
+
+        <span><a href="" class="btn btn-quick-shop">Quick Shopping List</a></span>
+        <span class="visible-xs inline"><a href="" class="btn btn-help">Need help</a></span>
+        <span class="navbar-right margin_right_3">
+            <a href="<?php echo front_url().'viewbasket'?>" class="btn btn-basket view_basket">View Basket</a>
+        </span>
+
+        <?php if( $this->session->userdata('userid') ) { ?>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="<?php echo front_url() ?>logout">Logout</a></li>
+                </ul>
+        <?php } else { ?>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="right-brd"><a href="<?php echo front_url() ?>login">Sign In</a></li>
+                <li><a href="<?php echo front_url() ?>registration">Registration</a></li>
+            </ul>
+        <?php } ?>
+        <span class="navbar-right hidden-xs"><a href="" class="btn btn-help">Need help</a></span>
+        </div><!-- /.container-fluid -->
+	</nav>
+    <input type="hidden" id="base_url" name="base_url" value="<?php echo front_url(); ?>">

@@ -1,0 +1,96 @@
+<?php if (!empty($categories)) { ?>
+    <section class="com_sec green-bg">
+        <div class="container">
+            <ul class="categories">
+                <?php foreach ($categories as $key => $category) { ?>
+                    <li><a href="<?php echo front_url() . 'productslist/index/main/' . $key ?>"><?php echo $category; ?></a></li>
+                <?php } ?>
+            </ul>
+        </div>
+    </section>
+<?php } ?>
+<section class="com_sec table_col">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <ul class="social">
+                    <li><a href=""><i class="fa fa-facebook circle"></i></a></li>
+                    <li><a href=""><i class="fa fa-twitter circle"></i></a></li>
+                    <li><a href=""><i class="fa fa-youtube-play circle"></i></a></li>
+                    <li><a href=""><i class="fa fa-instagram circle"></i></a></li>
+                </ul>
+            </div>
+            <div class="col-md-8">
+                <ul class="list-unstyled list-inline responsive_btn pull-right">
+                    <li><a href=""><img src="<?php echo $this->config->item('front_assets'); ?>img/retailer.png" class="img-responsive"></a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+<footer class="footer">
+    © 2015-2016 The Best Deals. All rights reserved.
+</footer>
+
+<!-- Toastr Messages -->
+<div id="success_message" class="hide"><?php echo $this->session->userdata('success_message'); ?></div>
+<div id="error_message" class="hide"><?php echo $this->session->userdata('error_message'); ?></div>
+<?php
+$this->session->unset_userdata('success_message');
+$this->session->unset_userdata('error_message');
+?>
+<!-- End toastr messages -->
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/bootstrap.min.js"></script>
+<script src="<?php echo $this->config->item('front_assets'); ?>js/jquery.parallax.js"></script>
+<script src="<?php echo $this->config->item('front_assets'); ?>js/jquery.flexisel.js"></script>
+<!-- Toastr Javascript -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/plugins/toastr.min.js"></script>
+<script src="<?php echo $this->config->item('front_assets'); ?>js/custom.js"></script>
+<!-- Validate JavaScript -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/plugins/jquery.validate.min.js"></script>
+
+<?php if ($this->router->fetch_class() == 'login') { ?>
+    <script src="<?php echo $this->config->item('front_assets'); ?>js/pages/registration.js"></script>
+<?php } ?>
+
+<script src="<?php echo $this->config->item('front_assets'); ?>js/pages/topoffers.js"></script>
+
+<!-- Load JS as per controller loaded -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/pages/<?php echo $this->router->fetch_class(); ?>.js"></script>
+
+
+<!-- Loader js -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/loadingoverlay.min.js"></script>
+
+<!-- Raty js -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/jquery.raty.js"></script>
+
+<!-- Toggles js -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/plugins/toggles.min.js"></script>
+
+<!-- Time ago js -->
+<script src="<?php echo $this->config->item('front_assets'); ?>js/plugins/jquery.timeago.js"></script>
+
+<script>
+    //Add below js only for home page
+    $(function() {
+        $('a[href*=#]:not([href=#])').click(function() {
+            if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') && location.hostname == this.hostname) {
+                var target = $(this.hash);
+                target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+                if (target.length) {
+                    $('html,body').animate({
+                        scrollTop: target.offset().top
+                    }, 1000);
+                    return false;
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

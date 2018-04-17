@@ -1,0 +1,1384 @@
+var oTable = '';
+var oTableSp = '';
+var oTableSpEd = '';
+var search_array = {};
+var spl_edit_array = {};
+var base_url = '';
+
+var typingTimer;                //timer identifier
+var doneTypingInterval;  //time in ms, 5 second for example
+var $input;
+$(function(){
+	validate_special_add_form();
+	show_table_edit();
+	base_url = $("#base_url").val();
+	//doneTypingInterval = 1000;  //time in ms, 5 second for example
+	//$input = $('#store_search');
+	oTableSp = $('#specials-table').dataTable({
+		"bProcessing": true,
+		"bServerSide": true,
+		"sAjaxSource": base_url+'admin/specialmanagement/special_datatable/',
+		"bJQueryUI": true,
+		"sPaginationType": "full_numbers",
+		"iDisplayLength":25,
+		"lengthMenu": [ 25, 50, 75, 100 ],
+		"dom": '<"top"f>rt<"bottom row"<"col-md-3"l><"col-md-3"i><"col-md-6"p>>',
+		"columns": [
+		{
+			data: "SpecialName"
+		},
+		{
+			data: "SpecialFrom"
+		},
+		{
+			data : "SpecialTo"
+		},
+		{
+			data : "sum_count", className: "storeCounts"
+		},
+		{
+			data : "store_count"
+		},
+		//		{
+		//			data : "SpecialBanner"
+		//		},
+		//		{
+		//			data : "TermsAndConditions"
+		//		},
+		{
+			data: "Actions",
+			"bSortable" : false,
+			"aTargets" : [ "no-sort" ]
+		}
+		],
+		"oLanguage": {
+			"sProcessing": "<img src='../assets/admin/img/ajax-loader_dark.gif'>"
+		},
+		"aaSorting": [],
+		"aoColumnDefs": [
+		{
+			"targets": [0,3],
+			"bSortable" : false
+		},
+		],
+		"dom": '<"top"f>rt<"bottom row"<"col-md-3"l><"col-md-3"i><"col-md-6"p>>',
+		'fnServerData': function (sSource, aoData, fnCallback) {
+                    
+                        var monthId = $("#monthId").val() == '' ? 0 : $("#monthId").val();
+                        var yearId = $("#yearId").val() == '' ? 0 : $("#yearId").val();
+
+			sSource = sSource+''+yearId+'/'+monthId;
+                                
+			//sSource = sSource;
+			aoData.push({
+				name: 'csrf_tbd_token', 
+				value: tbd_csrf
+			});
+			$.ajax
+			({
+				'dataType': 'json',
+				'type': 'POST',
+				'url': sSource,
+				'data': aoData,
+				'success': fnCallback
+			});
+		},
+		'fnCreatedRow': function( nRow, aData, iDataIndex ) {
+			$(nRow).attr('data-id',aData['Id']);
+		},
+		"fnRowCallback" : function(nRow, aData, iDisplayIndex){
+			var html = status_html(aData["active"]);
+			$("td:eq(5)", nRow).prepend(html);
+                        /*
+                        var special_store_counts = get_special_store_count( aData['Id'] );
+			$("td:eq(3)", nRow).html(special_store_counts.storeCount);
+                        */
+                        //$("td:eq(3)", nRow).html(125);
+		},
+		fnDrawCallback: function( oSettings ) {
+			$(".pagination li").removeClass("ui-button ui-state-default");
+			$(".first.disabled, .previous.disabled, .next.disabled, .last.disabled, .fg-button.active").off( "click" );
+			$(".first.disabled a, .previous.disabled a, .next.disabled a, .last.disabled a, .fg-button.active a").attr('href','javascript:void(0);');
+			$.ajax({
+				url: base_url+'admin/specialmanagement/get_approve_icon',
+				type: 'POST',
+				dataType: 'json',
+				data:{},
+				success: function(data){
+					if(data.result == 1){
+						data.message = jQuery.parseJSON(data.message);
+						$.each(data.message, function(index, element) {
+							$('tr[data-id="'+element+'"]').find('.actions').prepend('<a class="approve-sp-all" data-status="1" href="#" title="Approve"><i class="fa fa-fw fa-med fa-thumbs-o-down" style="color:#FF0000"></i></a>');
+						});
+						$('#specials-table tr').each(function(){
+							var elm = $(this);
+							var data_id = elm.attr('data-id');
+							if(jQuery.inArray(data_id, data.message) === -1){
+								$('tr[data-id="'+data_id+'"]').find('.actions').prepend('<a data-status="0" href="#" title="Approved"><i class="fa fa-fw fa-med fa-thumbs-o-up" style="color:#3c763d"></i></a>');
+							}
+						});
+					}
+				},
+				error: function(){
+					
+				}
+			});
+                        
+                         $('#specials-table tr').each(function(){
+                                var elm = $(this);
+                                var data_id = elm.attr('data-id');
+                                var special_store_counts = get_special_store_count(data_id);
+                                $('tr[data-id="'+data_id+'"]').find('.storeCounts').html(special_store_counts.storeCount);
+                        });
+                                                
+			
+			
+		}
+	});
+               
+        $("body").on('change', '#monthId', function(){
+           oTableSp.fnDraw();
+        });
+	
+        $("body").on('change', '#yearId', function(){
+           oTableSp.fnDraw();
+        });
+	
+        
+	// 
+	function get_special_store_count( special_id )
+        {
+                var html = {};
+
+                $.ajax({
+                        url : $("#base_url").val()+'admin/specialmanagement/get_special_store_count/'+special_id,
+                        method : 'POST',
+                        type: 'JSON',
+                        async: false,
+                        success : function(data)
+                        {
+                              data = JSON.parse(data);
+                              html.storeCount = data.storeCount;                              
+                        }
+                });
+                return html;
+        }
+        
+	
+	$("#price_from").datepicker({
+		format: 'yyyy-mm-dd',
+		todayHighlight: true
+	});
+
+	$("#price_to").datepicker({
+		format: 'yyyy-mm-dd',
+		todayHighlight: true
+	});
+
+	$('#price_from').datepicker({
+		format: 'yyyy-mm-dd',
+		autoclose: true
+	}).on('changeDate', function(selected){
+		startDate = new Date(selected.date.valueOf());
+		startDate.setDate(startDate.getDate(new Date(selected.date.valueOf())));
+		$('#price_to').datepicker('setStartDate', startDate);
+	});
+
+	$('#price_to').datepicker({
+		format: 'yyyy-mm-dd',
+		autoclose: true
+	}).on('changeDate', function(selected){
+		FromEndDate = new Date(selected.date.valueOf());
+		FromEndDate.setDate(FromEndDate.getDate(new Date(selected.date.valueOf())));
+		$('#price_from').datepicker('setEndDate', FromEndDate);
+	});
+});
+
+//$('body').on('change','#special_name_sel', function(){
+//	var elm = $(this);
+//	var spl_nm = $('#special_name_cont');
+//	if(elm == '' || typeof elm == 'undefined'){
+//		spl_nm.show();
+//	}
+//	else{
+//		spl_nm.hide();
+//	}
+//});
+$('body').on('change','#special_name_sel', function(){
+	var elm = $(this);
+	var span_bg = 'background: url('+$('#base_url').val()+'assets/admin/img/temp-slider.jpg) no-repeat scroll 0% 0% / 170px 72px;';
+	var special_sel = elm.val();
+	$('#special_name').val('');
+	$('#price_from').val('');
+	$('#price_to').val('');
+	$('.spbanner_image').attr('style',span_bg);
+	if(special_sel != '' && typeof special_sel != 'undefined'){
+		$.ajax({
+			url: $('#base_url').val()+'admin/specialmanagement/get_special_details',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				special_sel: special_sel
+			},
+			success: function(data){
+				if(data.result == 1){
+					$('#special_name').val(data.name);
+					$('#price_from').val(data.from);
+					$('#price_to').val(data.to);
+					if(data.image){
+						$('.spbanner_image').attr('style','background: url("'+$('#base_url').val()+'admin/../assets/images/specials/small/'+data.image+'") no-repeat scroll 0% 0% / 170px 72px;');
+					}
+					else{
+						$('.spbanner_image').attr('style',span_bg);
+					}
+				}
+				else{
+					Command: toastr["error"](data.message)
+				}
+			},
+			error: function(){
+				
+			}
+		});
+	}
+});
+
+function validate_special_add_form(){
+	$("#special_add_form").validate({
+		errorElement: 'div',
+		ignore: [],
+		rules: {
+			special_name_sel : {
+				required: function(e){
+					if($('#special_name_cont').is(":visible")){
+						return false;
+					}
+					else{
+						return true;
+					}
+				}
+			},
+			special_name : {
+				required: function(e){
+					var spl_val = $('#special_name_sel').val();
+					if(spl_val == '' || typeof spl_val == 'undefined'){
+						return true;
+					}
+					else{
+						return false;
+					}
+				}
+			},
+			price_from : {
+				required: function(e){
+					var spl_val = $('#special_name_sel').val();
+					if(spl_val == '' || typeof spl_val == 'undefined'){
+						return true;
+					}
+					else{
+						return false;
+					}
+				}
+			},
+			price_to : {
+				required: function(e){
+					var spl_val = $('#special_name_sel').val();
+					if(spl_val == '' || typeof spl_val == 'undefined'){
+						return true;
+					}
+					else{
+						return false;
+					}
+				}
+			},
+			'state_special_list[]':{
+				required: function(e){
+					if($('.sp_ch_1:checked').length > 0){
+						return false;
+					}
+					else{
+						return true;
+					}
+				},
+				minlength: 1
+			},
+			'store_special_format_list[]':{
+				required: function(e){
+					if($('.sp_sf_1:checked').length > 0){
+						return false;
+					}
+					else{
+						return true;
+					}
+				},
+				minlength: 1
+			},
+			'store_special_list[]': {
+				required: function(e){
+					if($('.sp_st_1:checked').length > 0){
+						return false;
+					}
+					else{
+						return true;
+					}
+				},
+				minlength: 1
+			}
+		},
+		messages: {
+			special_name_sel : {
+				required: "Please select the special"
+			},
+			special_name : {
+				required: "Please enter special name"
+			},
+			price_from : {
+				required: "Please select price from"
+			},
+			price_to : {
+				required: "Please select price to"
+			},
+			'state_special_list[]':{
+				required: 'Please select the State'
+			},
+			'store_special_format_list[]':{
+				required: 'Please select the Store Format'
+			},
+			'store_special_list[]':{
+				required: 'Please select the Store'
+			}
+		},
+		errorPlacement: function(error, element) {
+			if(element.hasClass('sp_ch_1') || element.hasClass('sp_st_1')){
+				var parent = element.parent().parent().parent().parent().parent().parent();
+				error.insertAfter(parent);
+			}
+			else if(element.parent().hasClass('input-group')){
+				error.insertAfter(element.parent());
+			}
+			else{
+				error.insertAfter(element);
+			}
+		}
+	});
+}
+function validate_special_edit_form(){
+	$("#special_edit_form").validate({
+		errorElement: 'div',
+		ignore: [],
+		rules: {
+			special_name : {
+				required: true
+			},
+			price_from : {
+				required: true
+			},
+			price_to : {
+				required: true
+			},
+			'state_special_list[]':{
+				required: function(e){
+					if($('.sp_ch_1:checked').length > 0){
+						return false;
+					}
+					else{
+						return true;
+					}
+				},
+				minlength: 1
+			},
+			'store_special_list[]': {
+				required: function(e){
+					if($('.sp_st_1:checked').length > 0){
+						return false;
+					}
+					else{
+						return true;
+					}
+				},
+				minlength: 1
+			}
+			
+		},
+		messages: {
+			special_name : {
+				required: "Please enter special name"
+			},
+			price_from : {
+				required: "Please select price from"
+			},
+			price_to : {
+				required: "Please select price to"
+			},
+			'state_special_list[]':{
+				required: 'Please select the State'
+			},
+			'store_special_list[]':{
+				required: 'Please select the Store'
+			}
+		},
+		errorPlacement: function(error, element) {
+			if(element.hasClass('sp_ch_1') || element.hasClass('sp_st_1')){
+				var parent = element.parent().parent().parent().parent().parent().parent();
+				error.insertAfter(parent);
+			}
+			else if(element.parent().hasClass('input-group')){
+				error.insertAfter(element.parent());
+			}
+			else{
+				error.insertAfter(element);
+			}
+		}
+	});
+}
+
+/*$('body').on('submit','#special_add_form',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var data = new FormData(this);
+	loading();
+	$.ajax({
+		url: $('#base_url').val()+'admin/specialmanagement/add_special_new',
+		type: 'POST',
+		dataType: 'json',
+		data: data,
+		contentType: false,
+		cache: false,
+		processData: false,
+		success: function (data) {
+			unloading();
+			if(data.result == 1){
+				append_table_start();
+				show_table();
+				$('.search_filter').select2();
+			}
+			else{
+				Command: toastr["error"](data.message);
+			}
+		},
+		error: function(){
+			unloading();
+		}
+	});
+});*/
+
+function append_table_start(){
+	var base_url = $("#base_url").val();
+	var sel = '';
+	$.ajax({
+		url: base_url+'admin/specialmanagement/get_main_categories',
+		type: 'POST',
+		data: {},
+		async: false,
+		success: function(data){
+			if(data != ''){
+				sel = data;
+			}
+		},
+		error: function(){
+			
+		}
+	});
+	var html = '<div class="search_filter_container">\n\
+    <div class="col-lg-12">\n\
+        <div class="col-xs-4">\n\
+            <div class="form-group pull-left">\n\
+                <label for="search">Search:</label>\n\
+                <input type="text" class="form-control" id="search_filter" name="search_filter">\n\
+            </div>\n\
+        </div>\n\
+        <div class="col-xs-4">\n\
+            <div class="form-group pull-left">\n\
+                <select class="search_filter" id="sel_main_cat">\n\
+				<option value="">Select Main Category</option>'+sel+'\n\
+				</select>\n\
+            </div>\n\
+        </div>\n\
+        <div class="col-xs-3">\n\
+            <div class="form-group pull-left">\n\
+                <select class="search_filter" id="sel_par_cat">\n\
+				<option value="">Select Parent Category</option>\n\
+				</select>\n\
+            </div>\n\
+        </div>\n\
+        <div class="col-xs-1">\n\
+            <div class="form-group pull-left">\n\
+                <label>Count: <span id="sel_prd_cnt">0</span></label>\n\
+            </div>\n\
+        </div>\n\
+    </div>\n\
+</div>\n\
+<div class="">\n\
+    <div class="col-lg-12">\n\
+        <div class="table-responsive" id="special-product-listing">\n\
+            <table id="special-management-table" class="table table-bordered table-hover table-striped dataTables">\n\
+                <thead>\n\
+                    <tr>\n\
+                        <th width="1%" class="no-sort"><input type="checkbox" id="select_products" /></th>\n\
+                        <th>Main Category</th>\n\
+                        <th>Parent Category</th>\n\
+                        <th width="45%">Product Name</th>\n\
+                        <th width="30%">Store</th>\n\
+                        <th width="5%">Default Price</th>\n\
+                        <th width="5%">Offer Price</th>\n\
+                        <th width="7%" class="alignCenter">Quantity</th>\n\
+                    </tr>\n\
+                </thead>\n\
+                <tbody></tbody>\n\
+            </table>\n\
+        </div>\n\
+<div class="form-group">\n\
+            <div class="row">\n\
+                <div class="col-md-12">\n\
+                    <button type="button" class="btn btn-primary btn-xs block full-width m-b" id="add_special_new">Add</button>\n\
+                    <a class="btn btn-danger btn-xs block full-width m-b" href="javascript:void(0)" id="cancel_special_new">Cancel</a>\n\
+                </div>\n\
+            </div>\n\
+        </div>\n\
+</div>\n\
+</div>';
+	$('#specials_add_div').html(html);
+}
+
+/*function show_table(){
+	var base_url = $("#base_url").val();
+	oTable = $('#special-management-table').dataTable({
+		"paging": false,
+		"bSortable": true,
+		"bProcessing": true,
+		"bServerSide": true,
+		"sAjaxSource": base_url+'admin/specialmanagement/datatable/',
+		"bJQueryUI": true,
+		"sPaginationType": "full_numbers",
+		"iDisplayLength":25,
+		"lengthMenu": [ 25, 50, 75, 100 ],
+		"dom": '<"top"f>rt<"bottom row"<"col-md-3"l><"col-md-3"i><"col-md-6"p>>',
+		"columns": [
+		{
+			data: "selectVal"
+		},
+		{
+			data: "MainCategory"
+		},
+		{
+			data: "ParentCategory"
+		},
+		{
+			data: "ProductName"
+		},
+		{
+			data : "StoreName"
+		},
+		{
+			data : "RRP"
+		},
+		{
+			data: "SpecialPrice"
+		},
+		{
+			data: "SpecialQty"
+		}
+		],
+		aaSorting: [],
+		"aoColumnDefs": [
+		{
+			"targets": [0],
+			"bSortable" : false
+		},
+		{
+			"targets": [1],
+			"bSortable" : true
+		},
+		{
+			"targets": [2],
+			"bSortable" : true
+		},
+		{
+			"targets": [3],
+			"bSortable" : true
+		},
+		{
+			"targets": [4],
+			"bSortable" : false
+		},
+		{
+			"targets": [5],
+			"bSortable" : false
+		}
+		],
+		"oLanguage": {
+			"sProcessing": "<img src='../assets/admin/img/ajax-loader_dark.gif'>"
+		},
+		"dom": '<"top"f>rt<"bottom row"<"col-md-3"l><"col-md-3"i><"col-md-6"p>>',
+		'fnServerData': function (sSource, aoData, fnCallback) {
+			sSource = sSource;
+			aoData.push({
+				name: 'csrf_tbd_token', 
+				value: tbd_csrf
+			});
+			$.ajax
+			({
+				'dataType': 'json',
+				'type': 'POST',
+				'url': sSource,
+				'data': aoData,
+				'success': fnCallback
+			});
+		},
+		'fnCreatedRow': function( nRow, aData, iDataIndex ) {
+			$(nRow).attr('data-id',aData['u_id']);
+			$(nRow).attr('data-user-role',aData['RoleId']);
+		},
+		fnDrawCallback: function( oSettings ) {
+			$('div.dataTables_filter input').addClass("form-control");
+			if($(".pagination li").length > 0){
+				$(".pagination li").removeClass("ui-button ui-state-default");
+				$(".first.disabled, .previous.disabled, .next.disabled, .last.disabled, .fg-button.active").off( "click" );
+				$(".first.disabled a, .previous.disabled a, .next.disabled a, .last.disabled a, .fg-button.active a").attr('href','javascript:void(0);');
+			}
+			if($('input[name="store_products[]"]').length > 0){
+				var count = 0;
+				var i;
+
+				for (i in search_array) {
+					if (search_array.hasOwnProperty(i)) {
+						count++;
+					}
+				}
+				if(count > 0){
+					$.each(search_array, function( index, value ) {
+						var check_elm = $('input[type="checkbox"][value="'+index+'"]');
+						var price_elm = check_elm.parent().parent().find('input[type="text"]');
+						var qty_elm = check_elm.parent().parent().find('select').val(value.qty);
+						check_elm.prop('checked', true);
+						price_elm.val(value.price);
+						qty_elm.val(value.qty);
+					});
+				}
+			}
+		}
+	});
+}*/
+$('body').on('keyup','#search_special_filter',function(){
+	oTableSp.fnFilter($(this).val()) ;
+});
+$('body').on('keyup','#search_filter_ed',function(){
+	oTableSpEd.fnFilter($(this).val()) ;
+});
+$('body').on('change','#sel_main_cat',function(){
+	var elm = $(this);
+	var base_url = $("#base_url").val();
+	var sel = '';
+	var sel_val = elm.val();
+	$('#sel_par_cat').html('<option value="">Select Parent Category</option>');
+	$('#sel_par_cat').select2();
+	if(sel_val != '' && typeof sel_val != 'undefined'){
+		$.ajax({
+			url: base_url+'admin/specialmanagement/get_parent_categories',
+			type: 'POST',
+			data: {
+				sel_val: sel_val
+			},
+			async: false,
+			success: function(data){
+				if(data != ''){
+					$('#sel_par_cat').html(data);
+					$('#sel_par_cat').select2();
+				}
+			},
+			error: function(){
+
+			}
+		});
+	}
+		
+	if(elm.val() == ''){
+		oTable.fnFilter('',2) ;
+		oTable.fnFilter('',1) ;
+	}
+	else{
+		oTable.fnFilter($("#sel_main_cat option:selected").text(),1) ;
+	}
+	
+});
+$('body').on('change','#sel_par_cat',function(){
+	var elm = $(this);
+	if(elm.val() == ''){
+		oTable.fnFilter('',2) ;
+	}
+	else{
+		oTable.fnFilter($("#sel_par_cat option:selected").text(),2) ;
+	}
+	
+});
+
+
+function add_to_search(id){
+	if(id == '' || typeof id == 'undefined'){
+		$('input[name="store_products[]"]:checked').each(function(){
+			var elm = $(this);
+			var id = elm.val();
+			var price_elm = elm.parent().parent().find('input[type=text]');
+			var qty_elm = elm.parent().parent().find('select');
+			search_array[id] = {
+				"price": price_elm.val() == '' ? "0.00" : price_elm.val(), 
+				"qty": qty_elm.val()
+			}
+		});
+	}
+	else{
+		if($('input[name="store_products[]"][value="'+id+'"]').prop('checked')){
+			var elm_sel = $('input[name="store_products[]"][value="'+id+'"]');
+			var price_elm = elm_sel.parent().parent().find('input[type="text"]');
+			var qty_elm = elm_sel.parent().parent().find('select');
+			search_array[id] = {
+				"price": price_elm.val() == '' ? "0.00" : price_elm.val(), 
+				"qty": qty_elm.val()
+			};
+		}
+		else{
+			remove_search_value(id);
+		}
+			
+	}
+	show_sel_count();
+}
+
+function remove_search_value(id){
+	if(id == '' || typeof id == 'undefined'){
+		$('input[name="store_products[]"]').each(function(){
+			var elm = $(this);
+			if(!elm.prop('checked')){
+				delete search_array[elm.val()];
+			}
+		});
+	}
+	else{
+		delete search_array[id];
+	}
+	show_sel_count();
+}
+$('body').on('change','input[name="store_products[]"]', function(){
+	var elm = $(this);
+	var val = elm.val();
+	if(elm.prop('checked')){
+		add_to_search(val);
+	}
+	else{
+		remove_search_value(val);
+	}
+	console.log(search_array);
+});
+$('body').on('change','#select_products', function(){
+	var elm = $(this);
+	if(elm.prop('checked')){
+		add_to_search();
+	}
+	else{
+		remove_search_value();
+	}
+	console.log(search_array);
+});
+
+$('body').on('change', '.prod_prc', function(){
+	var elm = $(this);
+	var id = elm.attr('id').replace('product_price_','');
+	add_to_search(id);
+	console.log(search_array);
+});
+$('body').on('change', '.prd_qty', function(){
+	var elm = $(this);
+	var elm_cb = elm.parent().parent().find('input[type="checkbox"]');
+	var id = elm_cb.val();
+	add_to_search(id);
+	console.log(search_array);
+});
+
+function show_sel_count(){
+	var count = 0;
+	var i;
+
+	for (i in search_array) {
+		if (search_array.hasOwnProperty(i)) {
+			count++;
+		}
+	}
+	$('#sel_prd_cnt').html(count);
+}
+$('body').on('click','#add_special_new', function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var error = 0;
+	var base_url = $("#base_url").val();
+	$.each(search_array, function( index, value ) {
+		if(value.price <= 0){
+			error++;
+		}
+		else if(!$.isNumeric(value.price)){
+			error++;
+		}
+	});
+	if(error == 0){
+		$.ajax({
+			url: base_url+'admin/specialmanagement/add_special_product_new',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				product_details: JSON.stringify(search_array)
+			},
+			success: function(data){
+				if(data.result == 1){
+					window.location.reload();
+				}
+				else{
+					Command: toastr["error"](data.message);
+				}
+			},
+			error: function(){
+				alert('Something went wrong. Please try again');
+			}
+		});
+	}
+	else{
+		alert('Please enter valid price for all selected products');
+	}
+});
+$('body').on('click','#cancel_special_new', function(e){
+	e.preventDefault();
+	var c = confirm('Are you sure to cancel? All saved data will lost');
+	if(c){
+		window.location.reload();
+	}
+	
+});
+
+$('table#specials-table tbody').on('click','.edit', function(e) {
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var url = $(this).attr('data-href');
+	$.ajax({
+		url: url,
+		type: 'POST',
+		dataType: 'json',
+		data: {},
+		success: function(data){
+			createModal('edit-special-modal', 'Edit Special - ' + data.name, data.html,'wd-75');
+			validate_special_edit_form();
+			$("#price_from").datepicker({
+				format: 'yyyy-mm-dd',
+				todayHighlight: true
+			});
+
+			$("#price_to").datepicker({
+				format: 'yyyy-mm-dd',
+				todayHighlight: true
+			});
+
+			$('#price_from').datepicker({
+				format: 'yyyy-mm-dd',
+				autoclose: true
+			}).on('changeDate', function(selected){
+				startDate = new Date(selected.date.valueOf());
+				startDate.setDate(startDate.getDate(new Date(selected.date.valueOf())));
+				$('#price_to').datepicker('setStartDate', startDate);
+			});
+
+			$('#price_to').datepicker({
+				format: 'yyyy-mm-dd',
+				autoclose: true
+			}).on('changeDate', function(selected){
+				FromEndDate = new Date(selected.date.valueOf());
+				FromEndDate.setDate(FromEndDate.getDate(new Date(selected.date.valueOf())));
+				$('#price_from').datepicker('setEndDate', FromEndDate);
+			});
+		}
+	});
+			
+});
+
+$('body').on('submit', '.modalCustom #special_edit_form', function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var url = $(this).attr('action');
+	var data = new FormData(this);
+	loading();
+	$.ajax({
+		url: url,
+		type: 'POST',
+		dataType: 'json',
+		data: data,
+		contentType: false,
+		cache: false,
+		processData: false,
+		success: function(data){
+			if(data.result == 1){
+				window.location.reload();
+			}
+			else{
+				unloading();
+					Command: toastr["error"](data.message);
+			}
+		},
+		error: function(){
+			unloading();
+		}
+	});
+});
+
+$('table#specials-table tbody').on('click','.delete', function(e) {
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var elm = $(this);
+	var c = confirm('Are you sure to delete this special? All the product specials associated with this will removed.');
+	if(c){
+		var base_url = $("#base_url").val();
+		var id = elm.parent().parent().parent().attr('data-id');
+		$.ajax({
+			url: base_url+'admin/specialmanagement/delete_special',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				id: id
+			},
+			success: function(data){
+				if(data.result == 1){
+					window.location.reload();
+				}
+				else{
+					unloading();
+						Command: toastr["error"](data.message);
+				}
+			},
+			error: function(){
+				unloading();
+			}
+		});
+	}
+});
+
+function show_table_edit(){
+	var base_url = $("#base_url").val();
+	oTableSpEd = '';
+	oTableSpEd = $('#specials-edit-table').dataTable({
+		"paging": true,
+		"bSortable": true,
+		"bProcessing": true,
+		"bServerSide": true,
+		"sAjaxSource": base_url+'admin/specialmanagement/datatable_edit/'+$('#spec_sel').val(),
+		"bJQueryUI": true,
+		"sPaginationType": "full_numbers",
+		"iDisplayLength":25,
+		"lengthMenu": [ 25, 50, 75, 100 ],
+		"dom": '<"top"f>rt<"bottom row"<"col-md-3"l><"col-md-3"i><"col-md-6"p>>',
+		"columns": [
+		{
+			data: "ProductName"
+		},
+		//		{
+		//			data: "CompanyName"
+		//		},
+		//{
+		//	data : "StoreName"
+		//},
+		{
+			data : "RRP"
+		},
+		{
+			data: "SpecialPrice"
+		},
+		{
+			data: "SpecialQty"
+		},
+		{
+			data: "delVal"
+		}
+		],
+		"oLanguage": {
+			"sProcessing": "<img src='../../../assets/admin/img/ajax-loader_dark.gif'>"
+		},
+                
+               "aoColumnDefs": [
+		{
+			"targets": [2,3,4],
+			"bSortable" : false
+		}],
+                
+               
+		/*
+                "aoColumnDefs": [
+		{
+			"targets": [3,4,5],
+			"bSortable" : false
+		}
+                
+		//		{
+		//			"targets": [3],
+		//			"bSortable" : false
+		//		},
+		//		{
+		//			"targets": [4],
+		//			"bSortable" : false
+		//		},
+		//		{
+		//			"targets": [5],
+		//			"bSortable" : false
+		//		},
+		//		{
+		//			"targets": [6],
+		//			"bSortable" : false
+		//		},
+		//		{
+		//			"targets": [7],
+		//			"bSortable" : false
+		//		}
+		],
+                */
+		"dom": '<"top"f>rt<"bottom row"<"col-md-3"l><"col-md-3"i><"col-md-6"p>>',
+		'fnServerData': function (sSource, aoData, fnCallback) {
+			sSource = sSource;
+			aoData.push({
+				name: 'csrf_tbd_token', 
+				value: tbd_csrf
+			}
+			);
+			$.ajax
+			({
+				'dataType': 'json',
+				'type': 'POST',
+				'url': sSource,
+				'data': aoData,
+				'success': fnCallback
+			});
+		},
+		'fnCreatedRow': function( nRow, aData, iDataIndex ) {
+			$(nRow).attr('data-id',aData['u_id']);
+			$(nRow).attr('data-user-role',aData['RoleId']);
+		},
+		fnDrawCallback: function( oSettings ) {
+			$('div.dataTables_filter input').addClass("form-control");
+			if($(".pagination li").length > 0){
+				$(".pagination li").removeClass("ui-button ui-state-default");
+				$(".first.disabled, .previous.disabled, .next.disabled, .last.disabled, .fg-button.active").off( "click" );
+				$(".first.disabled a, .previous.disabled a, .next.disabled a, .last.disabled a, .fg-button.active a").attr('href','javascript:void(0);');
+			}
+			var count = 0;
+			var i;
+
+			for (i in spl_edit_array) {
+				if (spl_edit_array.hasOwnProperty(i)) {
+					count++;
+				}
+			}
+			if(count > 0){
+				fill_selected_edit_price();
+			}
+		}
+	});
+}
+
+function add_to_spledt(id){
+	if(id != '' && typeof id != 'undefined'){
+		var price_def_elm = $('#product_def_price_'+id);
+		var price_elm = $('#product_price_'+id);
+		var qty_elm = price_elm.parent().parent().find('select');
+		spl_edit_array[id] = {
+			"price_def": price_def_elm.val() == '' ? "0.00" : price_def_elm.val(), 
+			"price": price_elm.val() == '' ? "0.00" : price_elm.val(), 
+			"qty": qty_elm.val()
+		}
+	}
+	console.log(spl_edit_array);
+}
+
+function remove_spledt_value(id){
+	if(id != '' && typeof id != 'undefined'){
+		delete spl_edit_array[id];
+	}
+	console.log(spl_edit_array);
+}
+
+$('body').on('change','#specials-edit-table .prod_def_prc',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var elm = $(this);
+	var id = elm.attr('id').replace('product_def_price_','');
+	add_to_spledt(id);
+});
+$('body').on('change','#specials-edit-table .prod_prc',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var elm = $(this);
+	var id = elm.attr('id').replace('product_price_','');
+	add_to_spledt(id);
+});
+$('body').on('change','#specials-edit-table .prd_qty',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var elm = $(this).parent().parent().find('.prod_prc');
+	var id = elm.attr('id').replace('product_price_','');
+	add_to_spledt(id);
+});
+
+function fill_selected_edit_price(){
+	$.each(spl_edit_array, function( index, value ) {
+		var price_def_elm = $('#product_def_price_'+index);
+		var price_elm = $('#product_price_'+index);
+		var qty_elm = price_elm.parent().parent().find('select').val(value.qty);
+		price_def_elm.val(value.price_def);
+		price_elm.val(value.price);
+		qty_elm.val(value.qty);
+	});
+}
+
+$('body').on('click','#update_spl_prd',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var count = 0;
+	var i;
+
+	for (i in spl_edit_array) {
+		if (spl_edit_array.hasOwnProperty(i)) {
+			count++;
+		}
+	}
+	if(count > 0){
+		var error = 0;
+		$.each(spl_edit_array, function( index, value ) {
+			if(value.price_def == '' || isNaN(value.price_def) || typeof value.price_def == 'undefined' || value.price_def <= 0 || value.price == '' || typeof value.price == 'undefined' || value.price <= 0 || isNaN(value.price)){
+				alert('Please enter valid price in all fields');
+				error++;
+			}
+		});
+		if(error == 0){
+			$.ajax({
+				url: $('#base_url').val()+'admin/specialmanagement/modify_special',
+				type: 'POST',
+				dataType: 'json',
+				async: false,
+				data: {
+					edit_data: JSON.stringify(spl_edit_array)
+				},
+				success: function(data){
+					if(data.result == 1){
+						window.location.reload();
+					}
+					else{
+						Command: toastr["error"](data.message)
+					}
+				},
+				error: function(){
+					Command: toastr["error"]('Could not complete the action');
+				}
+			});
+		}
+	}
+	else{
+		alert('Please edit some records before continue');
+	}
+});
+
+$('body').on('click', '.delete_spl', function(){
+	var elm = $(this);
+	var parent = elm.parent().parent();
+	if(confirm('Do you really want to delete the special?')){
+		var data_id = elm.attr('data-id');
+		$.ajax({
+			url: $('#base_url').val()+'admin/specialmanagement/delete_special_product',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				data_id: data_id
+			},
+			success: function(data){
+				if(data.result == '1'){
+					parent.slideUp('slow', function(){
+						parent.remove();
+					});
+						Command: toastr["success"](data.message);
+				}
+				else{
+					Command: toastr["error"](data.message);
+				}
+			},
+			error: function(){
+				Command: toastr["error"]('Failed to complete request');
+			}
+		});
+	}
+});
+
+$('body').on('click','.approve-sp-all', function(e){
+        //alert("Success");
+        //return false;
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	var c = confirm('Are you sure to approve the specials?');
+	if(c){
+		var elm = $(this);
+		elm.blur();
+		var parent = elm.parent().parent().parent();
+		var sel_id = parent.attr('data-id');
+		loading();
+		$.ajax({
+			url: base_url+'admin/specialmanagement/approve_all_special',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				sel_id: sel_id
+			},
+			success: function(data){
+				unloading();
+				//				if(data.result == 1){
+				//					elm.removeClass('approve-sp-all');
+				//					elm.find('i').toggleClass('fa-thumbs-o-down fa-thumbs-o-up');
+				//					elm.find('i').attr('style','color:#3c763d');
+				//					elm.attr('title','Approved');
+				//				}
+				//				else{
+				//					Command: toastr["error"](data.message);
+				//				}
+				
+                                //window.location.reload();
+			},
+			error: function(){
+				//unloading();
+				//window.location.reload();
+			}
+		});
+	}
+});
+
+$('body').on('change','#all_states', function(){
+	var elm = $(this);
+	var check_status = elm.prop('checked');
+	$('.special_state').prop('checked',check_status);
+});
+$('body').on('change','#all_store_formats', function(){
+	var elm = $(this);
+	var check_status = elm.prop('checked');
+	$('.special_store_format').prop('checked',check_status);
+});
+
+$('body').on('change','.special_state', function(){
+	if($('.special_state:not(:checked)').length > 0){
+		$('#all_states').prop('checked',false);
+	}
+});
+$('body').on('change','#all_stores', function(){
+	var elm = $(this);
+	var check_status = elm.prop('checked');
+	$('.special_store').prop('checked',check_status);
+});
+
+$('body').on('change','.special_store', function(){
+	if($('.special_store:not(:checked)').length > 0){
+		$('#all_stores').prop('checked',false);
+	}
+});
+
+$('body').on('change', '.sp_ch_1', function(){
+	load_store_section();
+});
+$('body').on('change', '.sp_sf_1', function(){
+	load_store_section(1);
+});
+
+function load_store_section(sf){
+	$('#store_special_list').html('');
+	if(sf != 1){
+		$('#store_special_format').html('');
+	}
+	
+	var all_states = '0';
+	if($('#all_states').prop('checked')){
+		all_states = '1';
+	}
+	var states = [];
+	$.each($("input[name='state_special_list[]']:checked"), function() {
+		states.push($(this).val());
+	});
+	var store_formats = [];
+	$.each($("input[name='store_special_format_list[]']:checked"), function() {
+		store_formats.push($(this).val());
+	});
+	var search_string = $('#store_search').val();
+	loading();
+	$.ajax({
+		url: base_url+'admin/specialmanagement/get_state_stores',
+		type: 'POST',
+		dataType: 'json',
+		data: {
+			states: JSON.stringify(states),
+			all_states: all_states,
+			search_string: search_string,
+			sf: sf,
+			store_formats: JSON.stringify(store_formats)
+		},
+		success: function(data){
+			unloading();
+			if(data.result == 1){
+				$('#store_special_list').html(data.message);
+			}
+			else if(data.result == 2){
+				$('#store_special_format').html(data.message);
+			}
+		},
+		error: function(){
+			unloading();
+		}
+	});
+}
+
+$('body').on('submit','#special_add_form', function(e){
+	var state_length = $('.sp_ch_1').length;
+	var store_length = $('.sp_st_1').length;
+	var store_type_length = 1;
+	if($('#store_special_format').length > 0){
+		store_type_length = $('.sp_sf_1').length;
+	}
+	if(!state_length){
+		e.preventDefault();
+		alert('Please select the State before continue');
+	}
+	else if(!store_type_length){
+		e.preventDefault();
+		alert('Please select the Store Format before continue');
+	}
+	else if(!store_length){
+		e.preventDefault();
+		alert('Please select the Store before continue');
+	}
+	else{
+		$('#special_add_form').unbind().submit();
+	}
+		
+});
+
+//on keyup, start the countdown
+$('body').on('keyup','#store_search', function () {
+	clearTimeout(typingTimer);
+	typingTimer = setTimeout(doneTyping, doneTypingInterval);
+});
+
+//on keydown, clear the countdown 
+$('body').on('keydown','#store_search', function () {
+	clearTimeout(typingTimer);
+});
+
+//user is "finished typing," do something
+function doneTyping () {
+	var sf = '';
+	if($('#store_special_format').length > 0){
+		sf = 1;
+	}
+	load_store_section(sf);
+}
+
+$('body').on('click', 'table#specials-table tbody .active', function () {
+	var data = $(this).parents('tr').data();
+
+	var status = $(this).data('status');
+	if (confirm("Are you sure you want to change the status?")) {
+		window.location = "specialmanagement/change_status/" + data['id'] +"/"+status;
+	}
+});

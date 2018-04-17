@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <title>The Best Deal</title>
+
+        <!-- Bootstrap -->
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/bootstrap.css" rel="stylesheet">
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/bootstrap-select.css" rel="stylesheet">
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/custom.css" rel="stylesheet">
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/style.css" rel="stylesheet">
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/custom_responsive.css" rel="stylesheet">
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/font-awesome.css" rel="stylesheet">
+
+        <!-- Toastr CSS -->
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/toastr.min.css" rel="stylesheet" type="text/css">
+
+        <!-- Toggles CSS -->
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/toggles.css" rel="stylesheet" type="text/css">
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/toggles-light.css" rel="stylesheet" type="text/css">
+
+        <!-- Raty CSS -->
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/jquery.raty.css" rel="stylesheet">
+
+        <link href="<?php echo $this->config->item('front_assets'); ?>css/plugins/yamm.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="js/html5shiv.min.js"></script>
+          <script src="js/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <nav class="navbar navbar-default">
+            <div class="container">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="<?php echo front_url() ?>">
+                        <img src="<?php echo $this->config->item('front_assets'); ?>img/logo.png" class="img-responsive" alt="the best deal">
+                        <span> <img src="<?php echo $this->config->item('front_assets'); ?>img/TBD-Name-Logo.png" border="0"></span>
+                    </a>
+                </div>
+
+                      <?php echo form_open(front_url() . 'productslist/search', array('method'=>'get','id' => 'search_form','class'=>'navbar-form navbar-left','role'=>'search')); ?>
+                    <div class="input-group">
+
+
+                        <input type="text" id="search_text" name="search_text" class="form-control" placeholder="Search Product" style="display:none" value="<?php if(isset($search_text)) {echo $search_text;}?>">
+                        <span class="input-group-btn">
+                            <button class="btn btn-search pull-right " type="button" id="search_button">Go!</button>
+                        </span>
+
+                    </div><!-- /input-group -->
+                </form>
+                <div class="quickListheader">
+                    <span><a class="btn btn-quick-shop" role="button" data-toggle="collapse" data-target="#quickListDisplay" aria-expanded="true" aria-controls="quickListDisplay" >Quick Shopping List</a>
+
+                    </span>
+                    <div class="collapse" id="quickListDisplay">
+                        <?php echo form_open(front_url() . 'filter/quickshopping_list', array('id' => 'quick_search_form')); ?>
+                        <div class="quickshopping-list">
+                            <small>type list items and then click search</small>
+                            <textarea class="search_area" style="white-space: pre-line;" wrap="hard" id="quick_search_text" name="shopping_list" placeholder="Bread
+                                      Butter"> <?php echo nl2br(str_replace(',', '&#13;&#10;', $this->session->userdata('shopping_list')));?></textarea>
+                            <button class="btn quick_search_button" type="button">Search</button>
+                        </div>
+                        </form>
+                    </div>
+                </div>
+                <span class="visible-xs inline"><a href="<?php echo front_url() . 'faq' ?>" class="btn btn-help">Need help</a></span>
+                <span class="navbar-right view_basket_btn">
+                    <a href="<?php echo front_url() . 'viewbasket' ?>" class="btn btn-basket view_basket">View Basket</a>
+                </span>
+
+                <?php if ($this->session->userdata('userid')) { ?>
+                    <ul class="nav navbar-nav navbar-right user_profile_menu">
+                        <li class="dropdown">
+                            <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Welcome <?php echo character_limiter($this->session->userdata('name'), 6); ?> <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a href="<?php echo front_url() ?>my_profile">
+                                        <img src="<?php echo $this->config->item('front_assets'); ?>img/menu_user.png">
+                                        Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="<?php echo front_url() ?>my_profile#wishlists">
+                                        <img src="<?php echo $this->config->item('front_assets'); ?>img/menu_wishlist.png">
+                                        Wishlists
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="<?php echo front_url() ?>my_profile#pricealerts">
+                                        <img src="<?php echo $this->config->item('front_assets'); ?>img/menu_dollar.png">
+                                        Price Alerts
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="<?php echo front_url() ?>my_profile#favorites">
+                                        <img src="<?php echo $this->config->item('front_assets'); ?>img/menu_fav.png">
+                                        Favorites
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="<?php echo front_url() ?>my_profile#notification">
+                                        <img src="<?php echo $this->config->item('front_assets'); ?>img/menu_notifications.png">
+                                        Notifications
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="<?php echo front_url() ?>logout">
+                                        <img src="<?php echo $this->config->item('front_assets'); ?>img/menu_logout.png">
+                                        Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                <?php } else { ?>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="right-brd"><a href="<?php echo front_url() ?>login">Sign In</a></li>
+                        <li><a href="<?php echo front_url() ?>registration">Registration</a></li>
+                    </ul>
+                <?php } ?>
+                <span class="navbar-right hidden-xs"><a href="<?php echo front_url() . 'faq' ?>" class="btn btn-help">Need help</a></span>
+            </div><!-- /.container-fluid -->
+        </nav>
+        <input type="hidden" id="base_url" name="base_url" value="<?php echo front_url(); ?>">
+
